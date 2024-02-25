@@ -17,7 +17,7 @@ public:
     static float dt;
     static float time;
 
-    static void new_boids_random(int n);
+    static void new_boids_random();
     static void kill();
     static void step_sim();
     static void run(float time = 10.0);

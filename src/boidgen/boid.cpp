@@ -16,18 +16,17 @@ vec3 boid::dim_low = vec3(-10., -10., -10.);
 vec3 boid::dim_high = vec3(10., 10., 10.);
 vec3 boid::vel_low = vec3(-1., -1., -1.);
 vec3 boid::vel_high = vec3(1., 1., 1.);
-int boid::nboids = 0;
+int boid::nboids = 2;
 float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
 
-void boid::new_boids_random(int n){
+void boid::new_boids_random(){
     kill();
-    nboids = n;
-    pos = new vec3[n];
-    vel = new vec3[n];
-    acc = new vec3[n];
+    pos = new vec3[nboids];
+    vel = new vec3[nboids];
+    acc = new vec3[nboids];
     vec3 dim_diff = dim_high - dim_low;
-    for (int i = 0; i < 3*n; i++){
+    for (int i = 0; i < 3*nboids; i++){
         ((float*)pos)[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         ((float*)pos)[i] *= ((float*)&dim_diff)[i%3];
         ((float*)pos)[i] += ((float*)&dim_low)[i%3];
@@ -54,8 +53,12 @@ void boid::step_sim(){
 void boid::run(float time){
     int steps = static_cast<int>(time / dt) + 1;
     sim_boids = new vec3[steps * nboids];
+    std::cout << "Step 0: " << std::endl;
+    print_boids();
     for (int i = 0; i < steps; i++){
-
+        std::cout << "Step " << i + 1 << ": " << std::endl;
+        step_sim();
+        print_boids();
     }
 }
 
