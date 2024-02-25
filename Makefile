@@ -8,24 +8,28 @@ SRCVI := $(wildcard ./src/visualize/*.cpp)
 OBJBG := $(subst src,build,$(SRCBG:.cpp=.o))
 OBJVI := $(subst src,build,$(SRCVI:.cpp=.o))
 
-INCBG := /include/boidgen/
-INCVI := /include/visualize/
+INCBG := ./include/boidgen/
+INCVI := ./include/visualize/
 INC_FLAGSBG := $(addprefix -I,$(INCBG))
 INC_FLAGSVI := $(addprefix -I,$(INCVI))
 
 EXECBG := build/boids
 EXECVI := visualize
 
-test:
-	echo $(SRCBG)
-	echo $(OBJBG)
-
 all: boidgen visualize
 
-boidgen:
+boidgen: $(EXECBG) build/boidgen/
+
+$(EXECBG): $(OBJBG)
 	mkdir -p build/boidgen/
-	$(CXX) $(CXXFLAGS) $(INC_FLAGSBG) -c $(SRCBG) -o $(OBJBG)
 	$(CXX) $(OBJBG) -o $(EXECBG)
+
+build/boidgen/%.o : src/boidgen/%.cpp
+	mkdir -p build/boidgen/
+	$(CXX) $(CXXFLAGS) $(INC_FLAGSBG) -c $< -o $@
+
+
+$(BUILD_DIR)/%.cpp.o: %.cpp
 
 visualize:
 	$(CXX) $(CXXFLAGS) $(INC_FLAGSVI) -c $(SRCVI) -o $(OBJVI)
@@ -33,4 +37,3 @@ visualize:
 
 clean:
 	rm -rf build
-	echo "nothing3"
