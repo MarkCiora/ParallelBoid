@@ -70,7 +70,6 @@ void boid::run(float time){
     //print_boids();
     for (int i = 1; i < steps; i++){
         std::cout << "Step " << i + 1 << ": " << std::endl;
-        calc_acc_all();
         step_sim();
         for (int j = 0; j < nboids; j++){
             sim_boids[sim_boids_index] = pos[j];
