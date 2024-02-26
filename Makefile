@@ -1,6 +1,7 @@
 CXX := g++
 
-CXXFLAGS := -std=c++11 -Wall
+CXXFLAGSBG := -std=c++11 -Wall
+CXXFLAGSVI := -std=c++11 -Wall -lglut -lGLU -lGL
 
 SRCBG := $(wildcard ./src/boidgen/*.cpp)
 SRCVI := $(wildcard ./src/visualize/*.cpp)
@@ -14,7 +15,7 @@ INC_FLAGSBG := $(addprefix -I,$(INCBG))
 INC_FLAGSVI := $(addprefix -I,$(INCVI))
 
 EXECBG := build/boids
-EXECVI := build/visualize
+EXECVI := build/vis
 
 all: boidgen visualize
 
@@ -26,7 +27,7 @@ $(EXECBG): $(OBJBG)
 
 build/boidgen/%.o : src/boidgen/%.cpp
 	mkdir -p build/boidgen/
-	$(CXX) $(CXXFLAGS) $(INC_FLAGSBG) -c $< -o $@
+	$(CXX) $(CXXFLAGSBG) $(INC_FLAGSBG) -c $< -o $@
 
 visualize: $(EXECVI) build/visualize/
 
@@ -34,9 +35,9 @@ $(EXECVI): $(OBJVI)
 	mkdir -p build/visualize/
 	$(CXX) $(OBJVI) -o $(EXECVI)
 
-build/visualize/%.o : src/boidgen/%.cpp
+build/visualize/%.o : src/visualize/%.cpp
 	mkdir -p build/visualize/
-	$(CXX) $(CXXFLAGS) $(INC_FLAGSVI) -c $< -o $@
+	$(CXX) $(CXXFLAGSVI) $(INC_FLAGSVI) -c $< -o $@
 
 clean:
 	rm -rf build
