@@ -18,10 +18,15 @@ vec3 boid::dim_low = vec3(-10., -10., -10.);
 vec3 boid::dim_high = vec3(10., 10., 10.);
 vec3 boid::vel_low = vec3(-1., -1., -1.);
 vec3 boid::vel_high = vec3(1., 1., 1.);
+vec3 boid::center = vec3(0., 0., 0.);
 int boid::nboids = 2;
 int boid::steps = 0;
 float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
+
+float w_collision = 0.3;
+float w_alignment = 0.4;
+float w_centering = 0.3;
 
 void boid::new_boids_random(){
     kill();
@@ -48,7 +53,7 @@ void boid::kill(){
 }
 
 void boid::step_sim(){
-    calc_acc();
+    calc_acc_all();
     physics_update();
     time += dt;
 }
@@ -65,7 +70,7 @@ void boid::run(float time){
     //print_boids();
     for (int i = 1; i < steps; i++){
         std::cout << "Step " << i + 1 << ": " << std::endl;
-        calc_acc();
+        calc_acc_all();
         step_sim();
         for (int j = 0; j < nboids; j++){
             sim_boids[sim_boids_index] = pos[j];
@@ -81,6 +86,7 @@ void boid::print_boids(){
     for (int i = 0; i < nboids; i++){
         std::cout << i << ": " << pos[i] << " + " << dt << "*" << vel[i] << std::endl;
     }
+    std::cout << "center: " << center << std::endl;
 }
 
 void boid::write_sim_boids(){
@@ -103,8 +109,29 @@ void boid::write_sim_boids(){
     file.close();
 }
 
-void boid::calc_acc(){
-    //eileen code boid rules here
+// calculate acceleration using all boids with each other
+void boid::calc_acc_all(){
+    float collision_factor, alignment_factor, centering_factor;
+
+    // alignment
+    vec3 avg_vel = vec3(0,0,0);
+    for (int i = 0; i < nboids; i++){
+        avg_vel += vel[i];
+    }
+    avg_vel /= nboids;
+
+    // centering
+    // for(i=0; i<nboids; i++){
+    //     s
+    // }
+}
+
+void boid::set_center_all(){
+    center.clear();
+    for (int i = 0; i < nboids; i++){
+        center += pos[i];
+    }
+    center /= nboids;
 }
 
 void boid::physics_update(){
