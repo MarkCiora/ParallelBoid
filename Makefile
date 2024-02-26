@@ -14,7 +14,7 @@ INC_FLAGSBG := $(addprefix -I,$(INCBG))
 INC_FLAGSVI := $(addprefix -I,$(INCVI))
 
 EXECBG := build/boids
-EXECVI := visualize
+EXECVI := build/visualize
 
 all: boidgen visualize
 
@@ -28,12 +28,15 @@ build/boidgen/%.o : src/boidgen/%.cpp
 	mkdir -p build/boidgen/
 	$(CXX) $(CXXFLAGS) $(INC_FLAGSBG) -c $< -o $@
 
+visualize: $(EXECVI) build/visualize/
 
-$(BUILD_DIR)/%.cpp.o: %.cpp
-
-visualize:
-	$(CXX) $(CXXFLAGS) $(INC_FLAGSVI) -c $(SRCVI) -o $(OBJVI)
+$(EXECVI): $(OBJVI)
+	mkdir -p build/visualize/
 	$(CXX) $(OBJVI) -o $(EXECVI)
+
+build/visualize/%.o : src/boidgen/%.cpp
+	mkdir -p build/visualize/
+	$(CXX) $(CXXFLAGS) $(INC_FLAGSVI) -c $< -o $@
 
 clean:
 	rm -rf build
