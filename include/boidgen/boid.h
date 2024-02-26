@@ -13,6 +13,7 @@ public:
     static vec3 dim_low, dim_high;
     static vec3 vel_low, vel_high;
     static vec3 acc_low, acc_high;
+    static vec3 center;
     static int nboids;
     static float dt;
     static float time;
@@ -26,6 +27,8 @@ public:
     static void write_sim_boids(std::string outfile);
 
 private:
-    static void calc_acc();
+    static void set_center_all();
+
+    static void calc_acc_all();
     static void physics_update();
 };

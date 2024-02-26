@@ -14,6 +14,10 @@ vec3::vec3(float x_, float y_, float z_){
     z = z_;
 }
 
+void vec3::clear(){
+    x = 0; y = 0; z = 0;
+}
+
 float vec3::norm(){
     return std::sqrt(x*x + y*y + z*z);
 }

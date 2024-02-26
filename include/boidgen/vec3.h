@@ -7,6 +7,7 @@ public:
     float x,y,z;
     vec3();
     vec3(float x_, float y_, float z_);
+    void clear();
     float norm();
     vec3 normalized();
     vec3& normalize();
