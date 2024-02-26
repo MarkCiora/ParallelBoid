@@ -14,6 +14,7 @@ public:
     static vec3 vel_low, vel_high;
     static vec3 acc_low, acc_high;
     static int nboids;
+    static int steps;
     static float dt;
     static float time;
 
@@ -23,9 +24,9 @@ public:
     static void run(float time = 10.0);
     
     static void print_boids();
-    static void write_sim_boids(std::string outfile);
 
 private:
     static void calc_acc();
     static void physics_update();
+    static void write_sim_boids();
 };

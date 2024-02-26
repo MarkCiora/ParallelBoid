@@ -1,8 +1,10 @@
 #include "boid.h"
 
+#include <algorithm>
 #include <random>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <string>
 #include <fstream>
 
@@ -17,6 +19,7 @@ vec3 boid::dim_high = vec3(10., 10., 10.);
 vec3 boid::vel_low = vec3(-1., -1., -1.);
 vec3 boid::vel_high = vec3(1., 1., 1.);
 int boid::nboids = 2;
+int boid::steps = 0;
 float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
 
@@ -51,15 +54,26 @@ void boid::step_sim(){
 }
 
 void boid::run(float time){
-    int steps = static_cast<int>(time / dt) + 1;
+    steps = static_cast<int>(time / dt) + 1;
+    int sim_boids_index = 0;
     sim_boids = new vec3[steps * nboids];
     std::cout << "Step 0: " << std::endl;
-    print_boids();
-    for (int i = 0; i < steps; i++){
-        std::cout << "Step " << i + 1 << ": " << std::endl;
-        step_sim();
-        print_boids();
+    for (int j = 0; j < nboids; j++){
+        sim_boids[sim_boids_index] = pos[j];
+        sim_boids_index++;
     }
+    //print_boids();
+    for (int i = 1; i < steps; i++){
+        std::cout << "Step " << i + 1 << ": " << std::endl;
+        calc_acc();
+        step_sim();
+        for (int j = 0; j < nboids; j++){
+            sim_boids[sim_boids_index] = pos[j];
+            sim_boids_index++;
+        }
+        //print_boids();
+    }
+    write_sim_boids();
 }
 
 void boid::print_boids(){
@@ -69,8 +83,24 @@ void boid::print_boids(){
     }
 }
 
-void boid::write_sim_boids(std::string outfile){
-
+void boid::write_sim_boids(){
+    //write
+    // int nboids
+    // int steps
+    // float dt
+    // float time
+    // float array 3*nboids*steps
+    std::ofstream file("boid_data.bin", std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open the file." << std::endl;
+        exit(-1);
+    }
+    file.write(reinterpret_cast<char*>(&nboids), sizeof(nboids));
+    file.write(reinterpret_cast<char*>(&steps), sizeof(steps));
+    file.write(reinterpret_cast<char*>(&dt), sizeof(dt));
+    file.write(reinterpret_cast<char*>(&time), sizeof(time));
+    file.write(reinterpret_cast<char*>(sim_boids), sizeof(vec3) * nboids * steps);
+    file.close();
 }
 
 void boid::calc_acc(){
