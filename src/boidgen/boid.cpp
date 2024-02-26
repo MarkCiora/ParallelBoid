@@ -76,7 +76,7 @@ void boid::run(float time){
             sim_boids[sim_boids_index] = pos[j];
             sim_boids_index++;
         }
-        //print_boids();
+        print_boids();
     }
     write_sim_boids();
 }
@@ -119,6 +119,11 @@ void boid::calc_acc_all(){
         avg_vel += vel[i];
     }
     avg_vel /= nboids;
+
+    for (int i = 0; i < nboids; i++){
+        acc[i] = vel[i] - avg_vel;
+        acc[i].normalize();
+    }
 
     // centering
     // for(i=0; i<nboids; i++){
