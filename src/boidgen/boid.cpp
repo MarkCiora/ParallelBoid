@@ -111,23 +111,51 @@ void boid::write_sim_boids(){
 // calculate acceleration using all boids with each other
 void boid::calc_acc_all(){
     float collision_factor, alignment_factor, centering_factor;
+    vec3* collision = nullptr;
+    vec3* alignment = nullptr;
+    vec3* centering = nullptr;
 
     // alignment
     vec3 avg_vel = vec3(0,0,0);
+    alignment = new vec3[nboids];
+
     for (int i = 0; i < nboids; i++){
         avg_vel += vel[i];
     }
     avg_vel /= nboids;
 
     for (int i = 0; i < nboids; i++){
-        acc[i] = vel[i] - avg_vel;
-        acc[i].normalize();
+        alignment[i] = vel[i] - avg_vel;
+    }
+
+    // separation
+    // average of difference vectors with others
+    vec3 avg_diff = vec3(0,0,0);
+    centering = new vec3[nboids];
+
+    for (int i = 0; i < nboids; i++){
+        avg_diff.clear();
+        for (int j = 0; j < nboids; j++){
+            if (j == i) continue;
+            avg_diff += (pos[i] - pos[j]).normalized();
+        }
+        avg_diff /= nboids - 1;
+        centering[i] = avg_diff;
     }
 
     // centering
     // for(i=0; i<nboids; i++){
     //     s
     // }
+
+    // calculate acceleration for all boids
+    for (int i = 0; i < nboids; i++){
+        acc[i] = ((collision[i] * collision_factor) + (alignment[i] * alignment_factor)).normalized();
+    }
+
+    delete [] alignment;
+    delete [] collision;
+    delete [] centering;
 }
 
 void boid::set_center_all(){

@@ -32,4 +32,6 @@ private:
     static void calc_acc_all();
     static void physics_update();
     static void write_sim_boids();
+
+    static float get_dist(vec3, vec3);
 };
