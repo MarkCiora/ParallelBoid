@@ -138,7 +138,7 @@ void boid::calc_acc_all(){
     avg_vel /= nboids;
 
     for (int i = 0; i < nboids; i++){
-        alignment[i] = vel[i] - avg_vel;
+        alignment[i] = avg_vel - vel[i];
     }
 
     // centering
@@ -151,7 +151,7 @@ void boid::calc_acc_all(){
     avg_pos /= nboids;
 
     for (int i = 0; i < nboids; i++){
-        centering[i] = pos[i] - avg_pos;
+        centering[i] = avg_pos - pos[i];
     }
 
     // calculate acceleration for all boids
@@ -175,9 +175,9 @@ void boid::set_center_all(){
 void boid::physics_update(){
     for(int i = 0; i < nboids; i++){
         vel[i] += acc[i] * dt;
-        if (vel[i].normsqrd() >= 1){
+        // if (vel[i].normsqrd() >= 1){
             vel[i] /= vel[i].norm();
-        }
+        // }
         pos[i] += vel[i] * dt;
     }
 }
