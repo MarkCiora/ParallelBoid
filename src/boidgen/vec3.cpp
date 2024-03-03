@@ -22,6 +22,10 @@ float vec3::norm(){
     return std::sqrt(x*x + y*y + z*z);
 }
 
+float vec3::normsqrd(){
+    return x*x + y*y + z*z;
+}
+
 vec3 vec3::normalized(){
     return *this / norm();
 }

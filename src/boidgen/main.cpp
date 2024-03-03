@@ -7,7 +7,7 @@
 
 int main(int argv, char **argc){
 
-    float time = 1.0;
+    float time = 10.0;
     if (argv == 1){
         boid::new_boids_random();
     } else if (argv == 2){

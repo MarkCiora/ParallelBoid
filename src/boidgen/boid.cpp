@@ -14,8 +14,8 @@ vec3* boid::pos = nullptr;
 vec3* boid::vel = nullptr;
 vec3* boid::acc = nullptr;
 vec3* boid::sim_boids = nullptr;
-vec3 boid::dim_low = vec3(-10., -10., -10.);
-vec3 boid::dim_high = vec3(10., 10., 10.);
+vec3 boid::dim_low = vec3(-5., -5., -5.);
+vec3 boid::dim_high = vec3(5., 5., 5.);
 vec3 boid::vel_low = vec3(-1., -1., -1.);
 vec3 boid::vel_high = vec3(1., 1., 1.);
 vec3 boid::center = vec3(0., 0., 0.);
@@ -141,6 +141,9 @@ void boid::set_center_all(){
 void boid::physics_update(){
     for(int i = 0; i < nboids; i++){
         vel[i] += acc[i] * dt;
+        if (vel[i].normsqrd() >= 1){
+            vel[i] /= vel[i].norm();
+        }
         pos[i] += vel[i] * dt;
     }
 }
