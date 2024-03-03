@@ -9,6 +9,7 @@ public:
     vec3(float x_, float y_, float z_);
     void clear();
     float norm();
+    float normsqrd();
     vec3 normalized();
     vec3& normalize();
     vec3 operator+(const vec3& other) const;
