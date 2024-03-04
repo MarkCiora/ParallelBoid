@@ -24,7 +24,8 @@ int boid::steps = 0;
 float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
 
-float w_collision = 0.3;
+float gtfo_distance = 0.5;
+float w_collision = 0.4;
 float w_alignment = 0.4;
 float w_centering = 0.3;
 
@@ -113,19 +114,28 @@ void boid::calc_acc_all(){
     vec3* collision = nullptr;
     vec3* alignment = nullptr;
     vec3* centering = nullptr;
+    int counter = 0;
 
     // collision
     vec3 avg_diff = vec3(0,0,0);
     collision = new vec3[nboids];
 
     for (int i = 0; i < nboids; i++){
+        counter = 0;
         avg_diff.clear();
         for (int j = 0; j < nboids; j++){
             if (j == i) continue;
-            avg_diff += (pos[i] - pos[j]).normalized();
+            vec3 diff = (pos[i] - pos[j]);
+            float distsq = diff.normsqrd();
+            if (distsq < gtfo_distance * gtfo_distance){
+                avg_diff += (diff / distsq - diff / diff.norm()) * gtfo_distance;
+                counter++;
+            }
         }
-        avg_diff /= nboids - 1;
-        collision[i] = avg_diff;
+        if (counter > 0) {
+            avg_diff /= counter;
+            collision[i] = avg_diff;
+        }
     }
 
     // alignment

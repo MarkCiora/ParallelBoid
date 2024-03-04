@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <chrono>
 
 #include "vec3.h"
 #include "boid.h"
@@ -8,6 +9,10 @@
 
 int main(int argv, char **argc){
     // read from parameter file
+    auto currentTime = std::chrono::system_clock::now();
+    auto duration = currentTime.time_since_epoch();
+    double currentTimeInSeconds = std::chrono::duration_cast<std::chrono::duration<int>>(duration).count();
+    srand (currentTimeInSeconds);
     mINI::INIFile file("parameters.ini");
     mINI::INIStructure ini;
     file.read(ini);
