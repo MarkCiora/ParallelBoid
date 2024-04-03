@@ -114,8 +114,6 @@ void boid::calc_acc_all(){
     vec3* collision = nullptr;
     vec3* alignment = nullptr;
     vec3* centering = nullptr;
-    vec3* wall_avoidance_high = nullptr;
-    vec3* wall_avoidance_low = nullptr;
     int counter = 0;
 
     // collision
@@ -130,7 +128,7 @@ void boid::calc_acc_all(){
             vec3 diff = (pos[i] - pos[j]);
             float distsq = diff.normsqrd();
             if (distsq < gtfo_distance * gtfo_distance){
-                avg_diff += (diff * gtfo_distance / distsq - diff / diff.norm()) * gtfo_distance;
+                avg_diff += (diff / distsq - diff / diff.norm()) * gtfo_distance;
                 counter++;
             }
         }
@@ -166,48 +164,9 @@ void boid::calc_acc_all(){
         centering[i] = avg_pos - pos[i];
     }
 
-    // walls
-    wall_avoidance_high = new vec3[nboids];
-    wall_avoidance_low = new vec3[nboids];
-
-    for (int i = 0; i < nboids; i++){
-        float diff_top = abs(pos[i].x - dim_high.x);
-        float diff_bottom = abs(pos[i].x - dim_low.x);
-
-        float diff_right = abs(pos[i].y - dim_high.y);
-        float diff_left = abs(pos[i].y - dim_low.y);
-
-        float diff_front = abs(pos[i].z - dim_high.z);
-        float diff_back = abs(pos[i].z - dim_low.z);
-
-        if (diff_top < gtfo_distance){
-            wall_avoidance_high[i].x = -(gtfo_distance / diff_top - 1) * gtfo_distance;
-        }
-        
-        if (diff_right < gtfo_distance){
-            wall_avoidance_high[i].y = -(gtfo_distance / diff_right - 1) * gtfo_distance;
-        }
-
-        if (diff_front < gtfo_distance){
-            wall_avoidance_high[i].z = -(gtfo_distance / diff_front - 1) * gtfo_distance;
-        }
-
-        if (diff_bottom < gtfo_distance){
-            wall_avoidance_low[i].x = (gtfo_distance / diff_bottom - 1) * gtfo_distance;
-        }
-
-        if (diff_left < gtfo_distance){
-            wall_avoidance_low[i].y = (gtfo_distance / diff_left - 1) * gtfo_distance;
-        }
-
-        if (diff_back < gtfo_distance){
-            wall_avoidance_low[i].z = (gtfo_distance / diff_back - 1) * gtfo_distance;
-        }
-    }
-
     // calculate acceleration for all boids
     for (int i = 0; i < nboids; i++){
-        acc[i] = (collision[i] * w_collision) + (alignment[i] * w_alignment) + (centering[i] * w_centering) + wall_avoidance_high[i] + wall_avoidance_low[i];
+        acc[i] = ((collision[i] * w_collision) + (alignment[i] * w_alignment) + (centering[i] * w_centering)).normalized();
     }
 
     delete [] alignment;
