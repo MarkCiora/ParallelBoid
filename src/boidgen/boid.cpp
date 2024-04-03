@@ -7,6 +7,7 @@
 #include <fstream>
 #include <string>
 #include <fstream>
+#include <cmath>
 
 #include "vec3.h"
 
@@ -68,9 +69,9 @@ void boid::run(float time){
         sim_boids[sim_boids_index] = pos[j];
         sim_boids_index++;
     }
-    //print_boids();
+    print_boids();
     for (int i = 1; i < steps; i++){
-        std::cout << "Step " << i + 1 << ": " << std::endl;
+        std::cout << "Step " << i << ": " << std::endl;
         step_sim();
         for (int j = 0; j < nboids; j++){
             sim_boids[sim_boids_index] = pos[j];
@@ -171,14 +172,14 @@ void boid::calc_acc_all(){
     wall_avoidance_low = new vec3[nboids];
 
     for (int i = 0; i < nboids; i++){
-        float diff_top = abs(pos[i].x - dim_high.x);
-        float diff_bottom = abs(pos[i].x - dim_low.x);
+        float diff_top = std::fabs(pos[i].x - dim_high.x);
+        float diff_bottom = std::fabs(pos[i].x - dim_low.x);
 
-        float diff_right = abs(pos[i].y - dim_high.y);
-        float diff_left = abs(pos[i].y - dim_low.y);
+        float diff_right = std::fabs(pos[i].y - dim_high.y);
+        float diff_left = std::fabs(pos[i].y - dim_low.y);
 
-        float diff_front = abs(pos[i].z - dim_high.z);
-        float diff_back = abs(pos[i].z - dim_low.z);
+        float diff_front = std::fabs(pos[i].z - dim_high.z);
+        float diff_back = std::fabs(pos[i].z - dim_low.z);
 
         if (diff_top < gtfo_distance){
             wall_avoidance_high[i].x = -(gtfo_distance / diff_top - 1) * gtfo_distance;
@@ -204,6 +205,7 @@ void boid::calc_acc_all(){
             wall_avoidance_low[i].z = (gtfo_distance / diff_back - 1) * gtfo_distance;
         }
     }
+
 
     // calculate acceleration for all boids
     for (int i = 0; i < nboids; i++){
