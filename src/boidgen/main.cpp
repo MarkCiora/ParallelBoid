@@ -28,13 +28,13 @@ int main(int argv, char **argc){
     }
 
     if (ini.has("weights")) {
-        if (ini["weights"].has("w_collision")) boid::w_collision = stoi(ini.get("weights").get("w_collision"));
+        if (ini["weights"].has("w_collision")) boid::w_collision = stof(ini.get("weights").get("w_collision"));
         else boid::w_collision = 0.3;
 
-        if (ini["weights"].has("w_alignment")) boid::w_alignment = stoi(ini.get("weights").get("w_alignment"));
+        if (ini["weights"].has("w_alignment")) boid::w_alignment = stof(ini.get("weights").get("w_alignment"));
         else boid::w_collision = 0.4;
 
-        if (ini["weights"].has("w_centering")) boid::w_centering = stoi(ini.get("weights").get("w_centering"));
+        if (ini["weights"].has("w_centering")) boid::w_centering = stof(ini.get("weights").get("w_centering"));
         else boid::w_centering = 0.3;
     }
 
