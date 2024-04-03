@@ -1,6 +1,8 @@
 CXX := g++
 
 CXXFLAGSBG := -std=c++11 -Wall
+CXXFLAGSOMP := -std=c++11 -Wall
+CXXFLAGSCUDA := -std=c++11 -Wall
 CXXFLAGSVI := -std=c++11 -Wall -lglut -lGLU -lGL
 
 SRCBG := $(wildcard ./src/boidgen/*.cpp)
@@ -15,11 +17,15 @@ INC_FLAGSBG := $(addprefix -I,$(INCBG))
 INC_FLAGSVI := $(addprefix -I,$(INCVI))
 
 EXECBG := build/boids
+EXECOMP := build/omp
+EXECCUDA := build/cuda
 EXECVI := build/vis
 
 all: boidgen visualize
 
 boidgen: $(EXECBG) build/boidgen/
+omp: $(EXECOMP) build/omp/
+cuda: $(EXECCUDA) build/cuda/
 
 $(EXECBG): $(OBJBG)
 	mkdir -p build/boidgen/
