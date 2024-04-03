@@ -128,7 +128,7 @@ void boid::calc_acc_all(){
             vec3 diff = (pos[i] - pos[j]);
             float distsq = diff.normsqrd();
             if (distsq < gtfo_distance * gtfo_distance){
-                avg_diff += (gtfo_distance * diff / distsq - diff / diff.norm()) * gtfo_distance;
+                avg_diff += (diff / distsq - diff / diff.norm()) * gtfo_distance;
                 counter++;
             }
         }
