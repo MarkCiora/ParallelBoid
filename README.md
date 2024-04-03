@@ -7,5 +7,19 @@ ParallelBoid is a parallelization effort of the boids algorithm developed by Cra
 ## Build
 'make boidgen'
 
+## Set up Parameters
+- Create "parameters.ini" file in root
+- Populate it with this format:
+
+```
+[boids]
+nboids=3
+time=20
+[weights]
+w_collision=0.3
+w_alignment=0.4
+w_centering=0.3
+```
+
 ## Run
 './build/boids'
