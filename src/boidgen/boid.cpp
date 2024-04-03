@@ -25,9 +25,9 @@ float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
 
 float gtfo_distance = 0.5;
-float w_collision = 0.4;
-float w_alignment = 0.4;
-float w_centering = 0.3;
+float boid::w_collision = 0.4;
+float boid::w_alignment = 0.4;
+float boid::w_centering = 0.3;
 
 void boid::new_boids_random(){
     kill();

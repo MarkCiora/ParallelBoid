@@ -19,6 +19,10 @@ public:
     static float dt;
     static float time;
 
+    static float w_collision;
+    static float w_alignment;
+    static float w_centering;
+
     static void new_boids_random();
     static void kill();
     static void step_sim();
