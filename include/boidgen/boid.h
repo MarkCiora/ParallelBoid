@@ -18,6 +18,8 @@ public:
     static int steps;
     static float dt;
     static float time;
+    static float centering_distance;
+    static float alignment_distance;
 
     static float w_collision;
     static float w_alignment;

@@ -27,6 +27,17 @@ int main(int argv, char **argc){
         else time = 10.0;
     }
 
+    if (ini.has("weights")) {
+        if (ini["weights"].has("w_collision")) boid::w_collision = stof(ini.get("weights").get("w_collision"));
+        else boid::w_collision = 0.3;
+
+        if (ini["weights"].has("w_alignment")) boid::w_alignment = stof(ini.get("weights").get("w_alignment"));
+        else boid::w_collision = 0.4;
+
+        if (ini["weights"].has("w_centering")) boid::w_centering = stof(ini.get("weights").get("w_centering"));
+        else boid::w_centering = 0.3;
+    }
+
     boid::new_boids_random();
     boid::run(time);
 

@@ -15,8 +15,8 @@ vec3* boid::pos = nullptr;
 vec3* boid::vel = nullptr;
 vec3* boid::acc = nullptr;
 vec3* boid::sim_boids = nullptr;
-vec3 boid::dim_low = vec3(-5., -5., -5.);
-vec3 boid::dim_high = vec3(5., 5., 5.);
+vec3 boid::dim_low = vec3(-10., -10., -10.);
+vec3 boid::dim_high = vec3(10., 10., 10.);
 vec3 boid::vel_low = vec3(-1., -1., -1.);
 vec3 boid::vel_high = vec3(1., 1., 1.);
 vec3 boid::center = vec3(0., 0., 0.);
@@ -24,8 +24,10 @@ int boid::nboids = 2;
 int boid::steps = 0;
 float boid::dt = 1. / (float)(60);
 float boid::time = 0.0;
+float boid::centering_distance = 1.5;
+float boid::alignment_distance = 1.;
 
-float gtfo_distance = 0.5;
+float gtfo_distance = 1;
 float boid::w_collision = 0.4;
 float boid::w_alignment = 0.4;
 float boid::w_centering = 0.3;
@@ -36,15 +38,17 @@ void boid::new_boids_random(){
     vel = new vec3[nboids];
     acc = new vec3[nboids];
     vec3 dim_diff = dim_high - dim_low;
+    vec3 vel_diff = vel_high - vel_low;
     for (int i = 0; i < 3*nboids; i++){
         ((float*)pos)[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         ((float*)pos)[i] *= ((float*)&dim_diff)[i%3];
         ((float*)pos)[i] += ((float*)&dim_low)[i%3];
         ((float*)vel)[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        ((float*)vel)[i] *= ((float*)&vel_low)[i%3];
-        ((float*)vel)[i] += ((float*)&vel_high)[i%3];
+        ((float*)vel)[i] *= ((float*)&vel_diff)[i%3];
+        ((float*)vel)[i] += ((float*)&vel_low)[i%3];
         ((float*)acc)[i] = 0;
     }
+    for (int i = 0; i < nboids; i++) vel[i].normalize();
 }
 
 void boid::kill(){
@@ -64,20 +68,20 @@ void boid::run(float time){
     steps = static_cast<int>(time / dt) + 1;
     int sim_boids_index = 0;
     sim_boids = new vec3[steps * nboids];
-    std::cout << "Step 0: " << std::endl;
+    // std::cout << "Step 0: " << std::endl;
     for (int j = 0; j < nboids; j++){
         sim_boids[sim_boids_index] = pos[j];
         sim_boids_index++;
     }
-    print_boids();
+    // print_boids();
     for (int i = 1; i < steps; i++){
-        std::cout << "Step " << i << ": " << std::endl;
+        // std::cout << "Step " << i << ": " << std::endl;
         step_sim();
         for (int j = 0; j < nboids; j++){
             sim_boids[sim_boids_index] = pos[j];
             sim_boids_index++;
         }
-        print_boids();
+        // print_boids();
     }
     write_sim_boids();
 }
@@ -142,29 +146,43 @@ void boid::calc_acc_all(){
     }
 
     // alignment
-    vec3 avg_vel = vec3(0,0,0);
+    vec3* avg_vel = new vec3[nboids];
     alignment = new vec3[nboids];
 
     for (int i = 0; i < nboids; i++){
-        avg_vel += vel[i];
+        int alignment_counter = 1;
+        avg_vel[i] = vec3(0,0,0);
+        for (int j = 0; j < nboids; j++){
+            if ((pos[i] - pos[j]).norm() <= alignment_distance){
+                alignment_counter++;
+                avg_vel[i] = avg_vel[i] + vel[j];
+            }
+        }
+        avg_vel[i] = avg_vel[i] / ((float)alignment_counter);
     }
-    avg_vel /= nboids;
 
     for (int i = 0; i < nboids; i++){
-        alignment[i] = avg_vel - vel[i];
+        alignment[i] = avg_vel[i] - vel[i];
     }
 
     // centering
-    vec3 avg_pos = vec3(0,0,0);
+    vec3* avg_pos = new vec3[nboids];
     centering = new vec3[nboids];
 
     for (int i = 0; i < nboids; i++){
-        avg_pos += pos[i];
+        int centering_counter = 1;
+        avg_pos[i] = vec3(0,0,0);
+        for (int j = 0; j < nboids; j++){
+            if ((pos[i] - pos[j]).norm() <= centering_distance){
+                centering_counter++;
+                avg_pos[i] = avg_pos[i] + pos[j];
+            }
+        }
+        avg_pos[i] = avg_pos[i] / ((float)centering_counter);
     }
-    avg_pos /= nboids;
 
     for (int i = 0; i < nboids; i++){
-        centering[i] = avg_pos - pos[i];
+        centering[i] = avg_pos[i] - pos[i];
     }
 
     // walls
@@ -227,10 +245,19 @@ void boid::set_center_all(){
 
 void boid::physics_update(){
     for(int i = 0; i < nboids; i++){
-        vel[i] += acc[i] * dt;
-        // if (vel[i].normsqrd() >= 1){
-            vel[i] /= vel[i].norm();
-        // }
+        vec3 dir = vel[i].normalized();
+        vec3 acc_dir = acc[i].normalized();
+        float dot_product = dir.x * acc_dir.x + dir.y * acc_dir.y + dir.z * acc_dir.z;
+        vec3 true_acc_dir = (acc_dir - dir * dot_product).normalized();
+        float true_acc_mag = acc[i].norm();
+        // if (true_acc_mag >= 3) true_acc_mag = 3;
+        vel[i] += true_acc_dir * true_acc_mag * dt;
+        vel[i].normalize();
         pos[i] += vel[i] * dt;
+        // vel[i] += acc[i] * dt;
+        // if (vel[i].normsqrd() >= 1){
+        //     vel[i] /= vel[i].norm();
+        // }
+        // pos[i] += vel[i] * dt;
     }
 }
