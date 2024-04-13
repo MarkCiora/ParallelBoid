@@ -3,17 +3,17 @@ CXXCUDA := nvcc
 
 CXXFLAGSBG := -std=c++11 -Wall
 CXXFLAGSOMP := -std=c++11 -Wall -fopenmp
-CXXFLAGSCUDA := 
+CXXFLAGSCUDA :=
 CXXFLAGSVI := -std=c++11 -Wall -lglut -lGLU -lGL
 
 SRCBG := $(wildcard ./src/boidgen/*.cpp)
 SRCOMP := $(wildcard ./src/omp/*.cpp)
-SRCCUDA := $(wildcard ./src/cuda/*.cpp)
+SRCCUDA := $(wildcard ./src/cuda/*.cu)
 SRCVI := $(wildcard ./src/visualize/*.cpp)
 
 OBJBG := $(subst src,build,$(SRCBG:.cpp=.o))
 OBJOMP := $(subst src,build,$(SRCOMP:.cpp=.o))
-OBJCUDA := $(subst src,build,$(SRCCUDA:.cpp=.o))
+OBJCUDA := $(subst src,build,$(SRCCUDA:.cu=.o))
 OBJVI := $(subst src,build,$(SRCVI:.cpp=.o))
 
 INCBG := ./include/boidgen/
@@ -56,7 +56,7 @@ $(EXECCUDA): $(OBJCUDA)
 	mkdir -p build/cuda/
 	$(CXXCUDA) $(OBJCUDA) -o $(EXECCUDA)
 
-build/cuda/%.o : src/cuda/%.cpp
+build/cuda/%.o : src/cuda/%.cu
 	mkdir -p build/cuda/
 	$(CXXCUDA) $(CXXFLAGSCUDA) $(INC_FLAGSCUDA) -c $< -o $@
 

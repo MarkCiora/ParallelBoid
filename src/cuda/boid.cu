@@ -64,25 +64,52 @@ void boid::step_sim(){
     time += dt;
 }
 
+__global__
+void sim_kernel(int nboids, int steps, float time, float dt,
+                float centering_distance, float alignment_distance,
+                float w_col, float w_ali, float w_cen,
+                float* dpos, float *dvel, float *dacc,
+                float* ddim_low, float* ddim_high,
+                float* dvel_low, float* dvelhigh,
+                float* dcenter){
+
+}
+
 void boid::run(float time){
     steps = static_cast<int>(time / dt) + 1;
     int sim_boids_index = 0;
     sim_boids = new vec3[steps * nboids];
-    // std::cout << "Step 0: " << std::endl;
+
     for (int j = 0; j < nboids; j++){
         sim_boids[sim_boids_index] = pos[j];
         sim_boids_index++;
     }
-    // print_boids();
-    for (int i = 1; i < steps; i++){
-        // std::cout << "Step " << i << ": " << std::endl;
-        step_sim();
-        for (int j = 0; j < nboids; j++){
-            sim_boids[sim_boids_index] = pos[j];
-            sim_boids_index++;
-        }
-        // print_boids();
-    }
+
+    float *dpos = nullptr;
+    float *dvel = nullptr;
+    float *dacc = nullptr;
+    float *ddim_low = nullptr;
+    float *ddim_high = nullptr;
+    float *dvel_low = nullptr;
+    float *dvel_high = nullptr;
+    float *dcenter = nullptr;
+
+    sim_kernel<<<1,1>>>( nboids, steps, time, dt,
+                centering_distance, alignment_distance,
+                w_collision, w_alignment, w_centering,
+                dpos, dvel, dacc,
+                ddim_low, ddim_high,
+                dvel_low, dvel_high,
+                dcenter);
+
+    // for (int i = 1; i < steps; i++){
+    //     step_sim();
+    //     for (int j = 0; j < nboids; j++){
+    //         sim_boids[sim_boids_index] = pos[j];
+    //         sim_boids_index++;
+    //     }
+    // }
+
     write_sim_boids();
 }
 
