@@ -65,14 +65,230 @@ void boid::step_sim(){
 }
 
 __global__
-void sim_kernel(int nboids, int steps, float time, float dt,
+void sim_kernel(int nboids, int steps, float time, float dt, float gtfo_distance,
                 float centering_distance, float alignment_distance,
                 float w_col, float w_ali, float w_cen,
                 float* dpos, float *dvel, float *dacc,
                 float* ddim_low, float* ddim_high,
                 float* dvel_low, float* dvelhigh,
-                float* dcenter){
+                float* data_array){
+//stuff
+    int index = blockIdx.x*blockDim.x + threadIdx.x;
+    //FIRST DATA_ARRAY ENTRY
+    if (index < nboids){
+        data_array[3*index] = dpos[3*index];
+        data_array[3*index+1] = dpos[3*index+1];
+        data_array[3*index+2] = dpos[3*index+2];
+        // printf("%i, %i, %f, %f, %f \n",
+        //             index,
+        //             0,
+        //             data_array[0*nboids*3 + 3*index],
+        //             data_array[0*nboids*3 + 3*index+1],
+        //             data_array[0*nboids*3 + 3*index+2]);
+    }
+    __syncthreads();
 
+    float x, y, z, vx, vy, vz, acx, acy, acz;
+    for(int time_step = 1; time_step < steps; time_step++){
+        if (index < nboids){
+                        
+        //calc acc
+            float cox=0, coy=0, coz=0;
+            float alx=0, aly=0, alz=0;
+            float cex=0, cey=0, cez=0;
+            // vec3 collision = vec3(0,0,0);
+            // vec3 alignment = vec3(0,0,0);
+            // vec3 centering = vec3(0,0,0);
+            float wax=0, way=0, waz=0;
+            // vec3 wa_high = vec3(0,0,0);
+            // vec3 wa_low = vec3(0,0,0);
+            int collision_counter = 0;
+            int alignment_counter = 1;
+            int centering_counter = 1;
+            x = dpos[3*index];
+            y = dpos[3*index+1];
+            z = dpos[3*index+2];
+            vx = dvel[3*index];
+            vy = dvel[3*index+1];
+            vz = dvel[3*index+2];
+            float avg_diffx=0, avg_diffy=0, avg_diffz=0;
+            float avg_velx=vx, avg_vely=vy, avg_velz=vz;
+            float avg_posx=x, avg_posy=y, avg_posz=z;
+            // vec3 avg_diff = vec3(0,0,0);
+            // vec3 avg_vel = vec3(vx,vy,vz);
+            // vec3 avg_pos = vec3(x,y,z);
+
+            //all in 1
+            for (int j = 1; j < nboids; j++){
+                int i = (j + index) % nboids;
+                float jx = dpos[3*i];
+                float jy = dpos[3*i+1];
+                float jz = dpos[3*i+2];
+                float dx = jx - x;
+                float dy = jy - y;
+                float dz = jz - z;
+                float vjx = dvel[3*i];
+                float vjy = dvel[3*i+1];
+                float vjz = dvel[3*i+2];
+
+                //collision
+                float distsq = dx*dx + dy*dy + dz*dz;
+                if (distsq < gtfo_distance * gtfo_distance){
+                    float diff_factor = (gtfo_distance / distsq - rsqrtf(distsq)) * gtfo_distance;
+                    avg_diffx -= diff_factor * dx;
+                    avg_diffy -= diff_factor * dy;
+                    avg_diffz -= diff_factor * dz;
+                    collision_counter++;
+                }
+                if (distsq < alignment_distance * alignment_distance){
+                    avg_velx += vjx;
+                    avg_vely += vjy;
+                    avg_velz += vjz;
+                    alignment_counter++;
+                }
+                if (distsq < centering_distance * centering_distance){
+                    avg_posx += jx;
+                    avg_posy += jy;
+                    avg_posz += jz;
+                    centering_counter++;
+                }
+            }
+            if (collision_counter > 0) {
+                cox = avg_diffx / ((float)collision_counter);
+                coy = avg_diffy / ((float)collision_counter);
+                coz = avg_diffz / ((float)collision_counter);
+            }
+            alx = avg_velx / ((float)alignment_counter) - vx;
+            aly = avg_vely / ((float)alignment_counter) - vy;
+            alz = avg_velz / ((float)alignment_counter) - vz;
+            cex = avg_posx / ((float)centering_counter) - x;
+            cey = avg_posy / ((float)centering_counter) - y;
+            cez = avg_posz / ((float)centering_counter) - z;
+
+            float diff_top = fabs(10.0 - x);
+            float diff_bottom = fabs(10.0 + x);
+            float diff_right = fabs(10.0 - y);
+            float diff_left = fabs(10.0 + y);
+            float diff_front = fabs(10.0 - z);
+            float diff_back = fabs(10.0 + z);
+            if (diff_top < gtfo_distance) wax = (gtfo_distance / diff_top - 1) * gtfo_distance;
+            if (diff_right < gtfo_distance) way = (gtfo_distance / diff_right - 1) * gtfo_distance;
+            if (diff_front < gtfo_distance) waz = (gtfo_distance / diff_front - 1) * gtfo_distance;
+            if (diff_bottom < gtfo_distance) wax = -(gtfo_distance / diff_bottom - 1) * gtfo_distance;
+            if (diff_left < gtfo_distance) way = -(gtfo_distance / diff_left - 1) * gtfo_distance;
+            if (diff_back < gtfo_distance) waz = -(gtfo_distance / diff_back - 1) * gtfo_distance;
+
+            acx = (cox)*w_col + alx*w_ali + cex*w_cen - wax;
+            acy = (coy)*w_col + aly*w_ali + cey*w_cen - way;
+            acz = (coz)*w_col + alz*w_ali + cez*w_cen - waz;
+            // printf("pos %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         x,
+            //         y,
+            //         z);
+            // printf("vel %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         vx,
+            //         vy,
+            //         vz);
+            // printf("acc %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         acx,
+            //         acy,
+            //         acz);
+            // printf("co %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         cox,
+            //         coy,
+            //         coz);
+            // printf("wa %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         wax,
+            //         way,
+            //         waz);
+            // printf("al %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         alx,
+            //         aly,
+            //         alz);
+            // printf("ce %i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         cex,
+            //         cey,
+            //         cez);
+        }
+        __syncthreads();
+
+        //physics update
+        if (index < nboids){
+            float speed = sqrtf(vx*vx + vy*vy + vz*vz);
+            float dirx = vx / speed;
+            float diry = vy / speed;
+            float dirz = vz / speed;
+            float acc_mag = sqrtf(acx*acx + acy*acy + acz*acz);
+            // printf("%f, %f, %f, %f\n", acx, acy, acz, acc_mag);
+            if (acc_mag > 0.00001){
+                float adirx = acx / acc_mag;
+                float adiry = acy / acc_mag;
+                float adirz = acz / acc_mag;
+                float dir_dots = dirx*adirx + diry*adiry + dirz*adirz;
+                float acx_true = adirx - dirx * dir_dots;
+                float acy_true = adiry - diry * dir_dots;
+                float acz_true = adirz - dirz * dir_dots;
+                float true_mag = sqrtf(acx_true*acx_true + acy_true*acy_true + acz_true*acz_true);
+                acx_true = acx_true * acc_mag / true_mag;
+                acy_true = acy_true * acc_mag / true_mag;
+                acz_true = acz_true * acc_mag / true_mag;
+                vx += acx_true * dt;
+                vy += acy_true * dt;
+                vz += acz_true * dt;
+                speed = sqrtf(vx*vx + vy*vy + vz*vz);
+                vx /= speed;
+                vy /= speed;
+                vz /= speed;
+            }
+            x += vx * dt;
+            y += vy * dt;
+            z += vz * dt;
+            dpos[3*index] = x;
+            dpos[3*index+1] = y;
+            dpos[3*index+2] = z;
+            dvel[3*index] = vx;
+            dvel[3*index+1] = vy;
+            dvel[3*index+2] = vz;
+
+            //DATA_ARRAY ENTRY
+            data_array[time_step*nboids*3 + 3*index] = x;
+            data_array[time_step*nboids*3 + 3*index+1] = y;
+            data_array[time_step*nboids*3 + 3*index+2] = z;
+            // printf("%i, %i, %f, %f, %f \n",
+            //         index,
+            //         time_step,
+            //         data_array[time_step*nboids*3 + 3*index],
+            //         data_array[time_step*nboids*3 + 3*index+1],
+            //         data_array[time_step*nboids*3 + 3*index+2]);
+            // printf("\n");
+        }
+        __syncthreads();
+    }
+
+    // if (index < nboids)
+    // for (int time_step = 0; time_step < steps; time_step++){
+    //         printf("%i, %i, %f, %f, %f \n",
+    //                 index,
+    //                 time_step,
+    //                 data_array[time_step*nboids*3 + 3*index],
+    //                 data_array[time_step*nboids*3 + 3*index+1],
+    //                 data_array[time_step*nboids*3 + 3*index+2]);
+    // }
+    
 }
 
 void boid::run(float time){
@@ -92,22 +308,55 @@ void boid::run(float time){
     float *ddim_high = nullptr;
     float *dvel_low = nullptr;
     float *dvel_high = nullptr;
-    float *dcenter = nullptr;
+    float *data_array = nullptr;
 
-    sim_kernel<<<1,1>>>( nboids, steps, time, dt,
+    cudaMalloc(&dpos, nboids*3*sizeof(float));
+    cudaMalloc(&dvel, nboids*3*sizeof(float));
+    cudaMalloc(&dacc, nboids*3*sizeof(float));
+    cudaMalloc(&ddim_low, 3*sizeof(float));
+    cudaMalloc(&ddim_high, 3*sizeof(float));
+    cudaMalloc(&dvel_low, 3*sizeof(float));
+    cudaMalloc(&dvel_high, 3*sizeof(float));
+    cudaMalloc(&data_array, 3*nboids*steps*sizeof(float));
+
+    cudaMemcpy(dpos, (float*)pos, nboids*3*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dvel, (float*)vel, nboids*3*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(ddim_low, (float*)(&dim_low), 3*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(ddim_high, (float*)(&dim_high), 3*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dvel_low, (float*)(&vel_low), 3*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(dvel_high, (float*)(&vel_high), 3*sizeof(float), cudaMemcpyHostToDevice);
+
+    sim_kernel<<<(nboids + 255)/256, 256>>>(
+                nboids, steps, time, dt, gtfo_distance,
                 centering_distance, alignment_distance,
                 w_collision, w_alignment, w_centering,
                 dpos, dvel, dacc,
                 ddim_low, ddim_high,
                 dvel_low, dvel_high,
-                dcenter);
+                data_array);
 
-    // for (int i = 1; i < steps; i++){
-    //     step_sim();
-    //     for (int j = 0; j < nboids; j++){
-    //         sim_boids[sim_boids_index] = pos[j];
-    //         sim_boids_index++;
-    //     }
+    cudaDeviceSynchronize();
+
+    cudaMemcpy((float*)(sim_boids), data_array, 3*nboids*steps*sizeof(float), cudaMemcpyDeviceToHost);
+
+    cudaDeviceSynchronize();
+    cudaFree(dpos);
+    cudaFree(dvel);
+    cudaFree(dacc);
+    cudaFree(ddim_high);
+    cudaFree(ddim_low);
+    cudaFree(dvel_high);
+    cudaFree(dvel_low);
+    cudaFree(data_array);
+    
+    // printf("bozo\n");
+    // for (int time_step = 0; time_step < steps; time_step++){
+    //         printf("%i, %i, %f, %f, %f \n",
+    //                 0,
+    //                 time_step,
+    //                 ((float*)(sim_boids))[time_step*nboids*3 + 3*0],
+    //                 ((float*)(sim_boids))[time_step*nboids*3 + 3*0+1],
+    //                 ((float*)(sim_boids))[time_step*nboids*3 + 3*0+2]);
     // }
 
     write_sim_boids();

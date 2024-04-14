@@ -1,7 +1,7 @@
 CXX := g++
 CXXCUDA := nvcc
 
-CXXFLAGSBG := -std=c++11 -Wall
+CXXFLAGSBG := -Wall
 CXXFLAGSOMP := -std=c++11 -Wall -fopenmp
 CXXFLAGSCUDA :=
 CXXFLAGSVI := -std=c++11 -Wall -lglut -lGLU -lGL
