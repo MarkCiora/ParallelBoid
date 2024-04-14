@@ -35,6 +35,13 @@ vec3& vec3::normalize(){
     return *this;
 }
 
+vec3 vec3::cross(const vec3& v1, const vec3& v2){
+    float x = v1.y * v2.z - v1.z * v2.y;
+    float y = v1.z * v2.x - v1.x * v2.z;
+    float z = v1.x * v2.y - v1.y * v2.x;
+    return vec3(x,y,z);
+}
+
 vec3 vec3::operator+(const vec3& other) const{
     return vec3(x + other.x, y + other.y, z + other.z);
 }
