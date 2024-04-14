@@ -181,7 +181,7 @@ void boid::calc_acc_all(){
     for (i = 0; i < nboids; i++){
         for (j = 0; j < nboids; j++){
             if ((pos[i] - pos[j]).norm() <= centering_distance){
-                centering_counter++;
+                centering_counter[i]++;
                 avg_pos[i] = avg_pos[i] + pos[j];
             }
         }
@@ -197,7 +197,7 @@ void boid::calc_acc_all(){
     wall_avoidance_high = new vec3[nboids];
     wall_avoidance_low = new vec3[nboids];
 
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for (i = 0; i < nboids; i++){
         float diff_top = std::fabs(pos[i].x - dim_high.x);
         float diff_bottom = std::fabs(pos[i].x - dim_low.x);
@@ -235,7 +235,7 @@ void boid::calc_acc_all(){
 
 
     // calculate acceleration for all boids
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for (i = 0; i < nboids; i++){
         acc[i] = (collision[i] * w_collision) + (alignment[i] * w_alignment) + (centering[i] * w_centering) + wall_avoidance_high[i] + wall_avoidance_low[i];
     }
@@ -243,6 +243,15 @@ void boid::calc_acc_all(){
     delete [] alignment;
     delete [] collision;
     delete [] centering;
+    delete [] wall_avoidance_high;
+    delete [] wall_avoidance_low;
+
+    delete [] avg_vel;
+    delete [] avg_pos;
+
+    delete [] counter;
+    delete [] alignment_counter;
+    delete [] centering_counter;
 }
 
 void boid::set_center_all(){
@@ -254,7 +263,10 @@ void boid::set_center_all(){
 }
 
 void boid::physics_update(){
-    for(int i = 0; i < nboids; i++){
+    int i = 0;
+
+    #pragma omp parallel for private(i)
+    for(i = 0; i < nboids; i++){
         vec3 dir = vel[i].normalized();
         vec3 acc_dir = acc[i].normalized();
         float dot_product = dir.x * acc_dir.x + dir.y * acc_dir.y + dir.z * acc_dir.z;
