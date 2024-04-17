@@ -46,11 +46,11 @@ build/boidgen/%.o : src/boidgen/%.cpp
 	
 $(EXECOMP): $(OBJOMP)
 	mkdir -p build/omp/
-	$(CXX) $(OBJOMP) -o $(EXECOMP)
+	$(CXX) $(OBJOMP) -o $(EXECOMP) -fopenmp
 
 build/omp/%.o : src/omp/%.cpp
 	mkdir -p build/omp/
-	$(CXX) $(CXXFLAGSOMP) $(INC_FLAGSOMP) -c $< -o $@
+	$(CXX) $(CXXFLAGSOMP) $(INC_FLAGSOMP) -c $< -o $@ -fopenmp
 	
 $(EXECCUDA): $(OBJCUDA)
 	mkdir -p build/cuda/
