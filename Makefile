@@ -3,7 +3,7 @@ CXXCUDA := nvcc
 
 CXXFLAGSBG := -Wall
 CXXFLAGSOMP := -std=c++11 -Wall -fopenmp
-CXXFLAGSCUDA :=
+CXXFLAGSCUDA := -gencode arch=compute_35,code=[compute_35,sm_35] -gencode arch=compute_61,code=[compute_61,sm_61] -gencode arch=compute_70,code=[compute_70,sm_70] 
 CXXFLAGSVI := -std=c++11 -Wall -lglut -lGLU -lGL
 
 SRCBG := $(wildcard ./src/boidgen/*.cpp)
