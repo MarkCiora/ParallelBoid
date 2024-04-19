@@ -7,6 +7,8 @@
 #include "boid.h"
 #include "ini.h"
 
+#include <omp.h>
+
 int main(int argv, char **argc){
     // read from parameter file
     auto currentTime = std::chrono::system_clock::now();
@@ -39,7 +41,17 @@ int main(int argv, char **argc){
     }
 
     boid::new_boids_random();
+
+    double start = 0.0;
+    double end = 0.0;
+    double total = 0.0;
+
+    start = omp_get_wtime();
     boid::run(time);
+    end = omp_get_wtime();
+    total = end - start;
+    
+    std::cout << "Execution Time: " << total << std::endl;
 
     return 0;
 }

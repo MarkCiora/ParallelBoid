@@ -130,35 +130,14 @@ void boid::calc_acc_all(){
     int* counter = new int[nboids]{0};
     collision = new vec3[nboids];
 
-    // alignment
-    vec3* avg_vel = new vec3[nboids];
-    alignment = new vec3[nboids];
-    int* alignment_counter = new int[nboids]{0};
-
-    // centering
-    vec3* avg_pos = new vec3[nboids];
-    centering = new vec3[nboids];
-    int* centering_counter = new int[nboids]{0};
-
     int i = 0;
     int j = 0;
 
-    #pragma omp parallel for private(i,j) num_threads(threads)
+    #pragma omp parallel for collapse(2) private(i,j) num_threads(threads)
     for (i = 0; i < nboids; i++){
         for (j = 0; j < nboids; j++){
-            // alignment
-            if ((pos[i] - pos[j]).norm() <= alignment_distance){
-                alignment_counter[i]++;
-                avg_vel[i] = avg_vel[i] + vel[j];
-            }
-            //centering
-            if ((pos[i] - pos[j]).norm() <= centering_distance){
-                centering_counter[i]++;
-                avg_pos[i] = avg_pos[i] + pos[j];
-            }
-
             if (j == i) continue;
-            // collision
+            // printf("Thread %d of %d - i = %d and j = %d at time %f\n", omp_get_thread_num(), omp_get_max_threads(), i, j, time);
             vec3 diff = (pos[i] - pos[j]);
             float distsq = diff.normsqrd();
             if (distsq < gtfo_distance * gtfo_distance){
@@ -168,41 +147,68 @@ void boid::calc_acc_all(){
         }
     }
 
+    #pragma omp parallel for private(i) num_threads(threads)
+    for (i = 0; i < nboids; i++){
+        if (counter[i] > 0) collision[i] /= counter[i];
+    }
+
+    // alignment
+    vec3* avg_vel = new vec3[nboids];
+    alignment = new vec3[nboids];
+    int* alignment_counter = new int[nboids]{0};
+
+    #pragma omp parallel for collapse(2) private(i,j) num_threads(threads)
+    for (i = 0; i < nboids; i++){
+        for (j = 0; j < nboids; j++){
+            // printf("Thread %d of %d - i = %d and j = %d at time %f\n", omp_get_thread_num(), omp_get_max_threads(), i, j, time);
+            if ((pos[i] - pos[j]).norm() <= alignment_distance){
+                alignment_counter[i]++;
+                avg_vel[i] = avg_vel[i] + vel[j];
+            }
+        }
+    }
+
+    #pragma omp parallel for private(i) num_threads(threads)
+    for (i = 0; i < nboids; i++){
+        avg_vel[i] = avg_vel[i] / ((float)alignment_counter[i]+1);
+        alignment[i] = avg_vel[i] - vel[i];
+    }
+
+    // centering
+    vec3* avg_pos = new vec3[nboids];
+    centering = new vec3[nboids];
+    int* centering_counter = new int[nboids]{0};
+
+    #pragma omp parallel for collapse(2) private(i,j) num_threads(threads)
+    for (i = 0; i < nboids; i++){
+        for (j = 0; j < nboids; j++){
+            if ((pos[i] - pos[j]).norm() <= centering_distance){
+                centering_counter[i]++;
+                avg_pos[i] = avg_pos[i] + pos[j];
+            }
+        }
+    }
+
+    #pragma omp parallel for private(i) num_threads(threads)
+    for (i = 0; i < nboids; i++){
+        avg_pos[i] = avg_pos[i] / ((float)centering_counter[i]+1);
+        centering[i] = avg_pos[i] - pos[i];
+    }
+
     // walls
     wall_avoidance_high = new vec3[nboids];
     wall_avoidance_low = new vec3[nboids];
 
-    float diff_top = 0;
-    float diff_bottom = 0;
-
-    float diff_right = 0;
-    float diff_left = 0;
-
-    float diff_front = 0;
-    float diff_back = 0;
-
-    #pragma omp parallel for private(i, diff_top, diff_bottom, diff_right, diff_left, diff_front, diff_back) num_threads(threads)
+    #pragma omp parallel for private(i) num_threads(threads)
     for (i = 0; i < nboids; i++){
-        // collision
-        if (counter[i] > 0) collision[i] /= counter[i];
+        float diff_top = std::fabs(pos[i].x - dim_high.x);
+        float diff_bottom = std::fabs(pos[i].x - dim_low.x);
 
-        // alignment
-        avg_vel[i] = avg_vel[i] / ((float)alignment_counter[i]+1);
-        alignment[i] = avg_vel[i] - vel[i];
+        float diff_right = std::fabs(pos[i].y - dim_high.y);
+        float diff_left = std::fabs(pos[i].y - dim_low.y);
 
-        // centering
-        avg_pos[i] = avg_pos[i] / ((float)centering_counter[i]+1);
-        centering[i] = avg_pos[i] - pos[i];
-
-        // walls
-        diff_top = std::fabs(pos[i].x - dim_high.x);
-        diff_bottom = std::fabs(pos[i].x - dim_low.x);
-
-        diff_right = std::fabs(pos[i].y - dim_high.y);
-        diff_left = std::fabs(pos[i].y - dim_low.y);
-
-        diff_front = std::fabs(pos[i].z - dim_high.z);
-        diff_back = std::fabs(pos[i].z - dim_low.z);
+        float diff_front = std::fabs(pos[i].z - dim_high.z);
+        float diff_back = std::fabs(pos[i].z - dim_low.z);
 
         if (diff_top < gtfo_distance){
             wall_avoidance_high[i].x = -(gtfo_distance / diff_top - 1) * gtfo_distance;
@@ -227,8 +233,12 @@ void boid::calc_acc_all(){
         if (diff_back < gtfo_distance){
             wall_avoidance_low[i].z = (gtfo_distance / diff_back - 1) * gtfo_distance;
         }
+    }
 
-        // calculate acceleration for all boids
+
+    // calculate acceleration for all boids
+    #pragma omp parallel for private(i) num_threads(threads)
+    for (i = 0; i < nboids; i++){
         acc[i] = (collision[i] * w_collision) + (alignment[i] * w_alignment) + (centering[i] * w_centering) + wall_avoidance_high[i] + wall_avoidance_low[i];
     }
 

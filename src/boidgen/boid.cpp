@@ -134,14 +134,14 @@ void boid::calc_acc_all(){
             if (j == i) continue;
             vec3 diff = (pos[i] - pos[j]);
             float distsq = diff.normsqrd();
-            printf("distsq for i=%d: %f\n", i, distsq);
-            printf("gtfo: %f\n", gtfo_distance * gtfo_distance);
+            // printf("distsq for i=%d: %f\n", i, distsq);
+            // printf("gtfo: %f\n", gtfo_distance * gtfo_distance);
             if (distsq < gtfo_distance * gtfo_distance){
                 avg_diff += (diff * gtfo_distance / distsq - diff / diff.norm()) * gtfo_distance;
                 counter++;
             }
         }
-        printf("counter for i=%d: %d\n", i, counter);
+        // printf("counter for i=%d: %d\n", i, counter);
         if (counter > 0) {
             avg_diff /= counter;
             collision[i] = avg_diff;

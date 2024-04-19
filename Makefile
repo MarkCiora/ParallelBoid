@@ -38,11 +38,11 @@ cuda: $(EXECCUDA) build/cuda/
 
 $(EXECBG): $(OBJBG)
 	mkdir -p build/boidgen/
-	$(CXX) $(OBJBG) -o $(EXECBG)
+	$(CXX) $(OBJBG) -o $(EXECBG) -fopenmp
 
 build/boidgen/%.o : src/boidgen/%.cpp
 	mkdir -p build/boidgen/
-	$(CXX) $(CXXFLAGSBG) $(INC_FLAGSBG) -c $< -o $@
+	$(CXX) $(CXXFLAGSBG) $(INC_FLAGSBG) -c $< -o $@ -fopenmp
 	
 $(EXECOMP): $(OBJOMP)
 	mkdir -p build/omp/
